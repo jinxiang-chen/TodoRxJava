@@ -14,12 +14,14 @@ fun createWithNoError(){
         it.onNext(4)
         it.onNext(5)
         it.onNext(6)
+        sleep(5000)
         it.onComplete()
     }
 
     source.subscribe {
         System.out.println(it)
     }
+
 }
 
 fun createWithError(){
