@@ -1,11 +1,12 @@
 import io.reactivex.Observable
 import io.reactivex.functions.Function
 import io.reactivex.schedulers.Schedulers
+import java.time.LocalTime
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
 fun main(args: Array<String>) {
-    observeOnBehavior()
+    hasParalle()
 }
 
 fun blockingSubscribe(){
@@ -107,4 +108,24 @@ fun observeOnBehavior(){
             }
             .subscribe { System.out.println("next:$it") }
     sleep(10000)
+}
+
+fun noParalle(){
+    Observable.range(1, 10)
+            .map { intenseCalculation(it) }
+            .subscribe { System.out.println("${LocalTime.now()}") }
+}
+
+fun hasParalle(){
+    Observable.range(1, 10)
+            .flatMap{
+                Observable.just(it)
+                        .subscribeOn(Schedulers.computation())
+                        .map { it2 ->
+                            intenseCalculation(it2)
+                        }
+            }
+            .subscribe { System.out.println("${LocalTime.now()} on thread ${Thread.currentThread().name}") }
+    sleep(20000)
+
 }
