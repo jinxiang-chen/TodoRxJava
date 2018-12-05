@@ -4,9 +4,11 @@ import io.reactivex.schedulers.Schedulers
 import java.time.LocalTime
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 fun main(args: Array<String>) {
-    hasParalle()
+    unsubscribeOnWithAssignSchedulers()
 }
 
 fun blockingSubscribe(){
@@ -110,13 +112,13 @@ fun observeOnBehavior(){
     sleep(10000)
 }
 
-fun noParalle(){
+fun noParallel(){
     Observable.range(1, 10)
             .map { intenseCalculation(it) }
             .subscribe { System.out.println("${LocalTime.now()}") }
 }
 
-fun hasParalle(){
+fun hasParallel(){
     Observable.range(1, 10)
             .flatMap{
                 Observable.just(it)
@@ -128,4 +130,33 @@ fun hasParalle(){
             .subscribe { System.out.println("${LocalTime.now()} on thread ${Thread.currentThread().name}") }
     sleep(20000)
 
+}
+
+fun parallelGroupBy(){
+    val coreCount = Runtime.getRuntime().availableProcessors()
+    System.out.println(coreCount)
+    val assigner = AtomicInteger(0)
+    Observable.range(1, 24)
+            .groupBy { assigner.incrementAndGet() % coreCount}
+            .flatMap { it.observeOn(Schedulers.io()).map { it2 -> intenseCalculation(it2) }}
+            .blockingSubscribe { System.out.println("Receive $it ${LocalTime.now()} on thread ${Thread.currentThread().name}") }
+}
+
+fun unsubscribeOn(){
+    val d = Observable.interval(1, TimeUnit.SECONDS)
+            .doOnDispose { System.out.println("Disposing on thread ${Thread.currentThread().name}") }
+            .subscribe { System.out.println("Receive $it") }
+    sleep(3000)
+    d.dispose()
+    sleep(3000)
+}
+
+fun unsubscribeOnWithAssignSchedulers(){
+    val d = Observable.interval(1, TimeUnit.SECONDS)
+            .doOnDispose { System.out.println("Disposing on thread ${Thread.currentThread().name}") }
+            .unsubscribeOn(Schedulers.io())
+            .subscribe { System.out.println("Receive $it") }
+    sleep(3000)
+    d.dispose()
+    sleep(3000)
 }
