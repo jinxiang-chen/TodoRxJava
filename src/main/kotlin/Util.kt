@@ -9,6 +9,6 @@ fun sleep(millSecond: Long){
 }
 
 fun <T> intenseCalculation(value: T): T{
-    sleep(ThreadLocalRandom.current().nextLong(3000))
+    sleep(ThreadLocalRandom.current().nextLong(200))
     return value
 }
